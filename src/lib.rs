@@ -1,5 +1,6 @@
 mod edge_shape;
 mod node_shape;
+mod svg_export;
 
 use edge_shape::EdgeShape;
 use node_shape::NodeShape;
@@ -458,6 +459,22 @@ impl MApp {
                         };
                         file_handle.write(data_to_store.as_bytes()).await.unwrap();
                     })
+                }
+                // inside ui.collapsing("File", |ui| { ... })
+                if ui.button("Export SVG").clicked() {
+                    let g = self.fg.clone();
+                    let dark_mode = ui.ctx().style().visuals.dark_mode;
+                    crate::spawn_local(async move {
+                        let svg = crate::svg_export::export_svg(&g, dark_mode, 20.0);
+                        if let Some(file_handle) = rfd::AsyncFileDialog::new()
+                            .add_filter("SVG", &["svg"])
+                            .set_file_name("lean-graph.svg")
+                            .save_file()
+                            .await
+                        {
+                            let _ = file_handle.write(svg.as_bytes()).await;
+                        }
+                    });
                 }
                 if ui.button("Download dependency extractor").clicked() {
                     spawn_local(async move {
