@@ -35,16 +35,28 @@ def getConstantBody (n : Name) : TermElabM (Option Expr) := do
   return constValue
 
 
-def getAllConstsFromConst (n : Name) : TermElabM (Array Name) := do
+/--
+Leuenberger: Collect only the 'relevant' dependencies of a constant/definition by optionally filtering out instance dictionaries, 
+which can reduce the total number of dependencies by orders of magnitude. To readmit instances set keepInstances to true.
+-/
+def getRelevantConstsFromConst (n : Name) (keepInstances := false) (keepTheorems := true) (keepInternal := true) :
+    TermElabM (Array Name) := do
   let body ← getConstantBody n
-  let type ← getTypeExpr n
-  let consts1 := match body with
-    | some body => body.getUsedConstants
-    | none => [].toArray
-  let consts2 := type.getUsedConstants
-  let res := consts1 ++ consts2
-  let set := HashSet.ofArray res
-  return set.toArray
+  let consts := match body with | some b => b.getUsedConstants | none => #[]
+  let consts ← consts.filterM fun m => do
+    let info ← getConstInfo m
+    let inst ← isInstance m
+    pure <|
+      (match info with
+       | ConstantInfo.defnInfo _  => true
+       | ConstantInfo.axiomInfo _ => true
+       | ConstantInfo.thmInfo _  => keepTheorems
+       | _                        => false) &&
+      (keepInstances || !inst) &&
+      (keepInternal  || !m.isInternal)
+  return HashSet.ofArray consts |>.toArray
+
+
 
 def getAllConstsFromNamespace (n : String) : TermElabM (List Name) := do
   let env ← getEnv
@@ -74,7 +86,7 @@ def getUsedConstantGraph (names : List Name) (depth : Nat) : TermElabM (List (Na
 
 
     let newNodes ← outerLayer.mapM fun name => do
-      let consts ← try getAllConstsFromConst name catch | _ => pure #[]
+      let consts ← try getRelevantConstsFromConst name catch | _ => pure #[]
       pure (name, consts)
 
 
