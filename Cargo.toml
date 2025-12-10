@@ -20,6 +20,7 @@ log = "0.4.20"
 reqwest = { version = "0.11.22", features = ["json"] }
 wasm-bindgen-futures = "0.4.39"
 chrono = "0.4.31"
+winapi = { version = "0.3.9", features = ["winuser", "windef"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1.35.0", features = ["macros", "full"] }
