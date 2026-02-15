@@ -7,7 +7,7 @@ use node_shape::NodeShape;
 use rfd::AsyncFileDialog;
 
 const STATIC_JSON_FILES: [&str; 7] = ["Nat.zero_add.json", "Nat.prime_of_coprime.json", "Topology.json", "Cardinal.cantor.json", "Continuous.deriv_integral.json", "fermatLastTheoremFour.json", "PFR_conjecture.json"];
-pub const SERVER_ADDR: &str = "https://lean-graph.com";
+pub const SERVER_ADDR: &str = "https://patrik-cihal.github.io/lean-graph";
 
 use std::{
     collections::{BTreeMap, HashMap, BinaryHeap},
