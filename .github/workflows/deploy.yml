@@ -23,7 +23,7 @@ jobs:
           targets: wasm32-unknown-unknown
 
       - name: Install trunk
-        run: cargo install trunk --locked
+        run: cargo install trunk --version 0.21.8 --locked
 
       - name: Build
         run: trunk build --release --public-url /lean-graph/
