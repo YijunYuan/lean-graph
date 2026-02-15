@@ -45,7 +45,7 @@ impl EdgeType for Directed {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, PartialOrd, Ord, Eq)]
-enum ConstCategory {
+pub enum ConstCategory {
     Theorem,
     Definition,
     Axiom,
@@ -62,7 +62,7 @@ struct NodeData {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-struct NodePayload {
+pub struct NodePayload {
     name: String,
     vel: Vec2,
     color: [f32; 3],
@@ -99,7 +99,7 @@ impl NodePayload {
     }
 }
 
-type G = egui_graphs::Graph<NodePayload, (), Directed, u32, NodeShape, EdgeShape>;
+pub type G = egui_graphs::Graph<NodePayload, (), Directed, u32, NodeShape, EdgeShape>;
 
 #[derive(Serialize, Deserialize, Clone)]
 struct ForceSettings {
