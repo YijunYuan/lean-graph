@@ -23,9 +23,13 @@ fn main() {
 
     let web_options = eframe::WebOptions::default();
 
-    wasm_bindgen_futures::spawn_local(async {
+    // Check for a `url` query parameter to load custom extracted data JSON
+    let json_url = get_url_query_param("url")
+        .unwrap_or_else(|| format!("{}/static/Nat.zero_add.json", SERVER_ADDR));
+
+    wasm_bindgen_futures::spawn_local(async move {
         // let data_raw = read_graph_file_dialog().await;
-        let data_raw = read_graph_url(&format!("{}/static/Nat.zero_add.json", SERVER_ADDR))
+        let data_raw = read_graph_url(&json_url)
             .await
             .unwrap();
         eframe::WebRunner::new()
@@ -37,4 +41,12 @@ fn main() {
             .await
             .expect("failed to start eframe");
     });
+}
+
+#[cfg(target_arch = "wasm32")]
+fn get_url_query_param(param: &str) -> Option<String> {
+    let window = web_sys::window()?;
+    let search = window.location().search().ok()?;
+    let params = web_sys::UrlSearchParams::new_with_str(&search).ok()?;
+    params.get(param)
 }
