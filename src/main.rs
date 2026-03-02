@@ -21,17 +21,37 @@ fn main() {
 
     eframe::WebLogger::init(log::LevelFilter::Debug).ok();
 
-    let web_options = eframe::WebOptions::default();
+    let mut web_options = eframe::WebOptions::default();
+    if has_dark_hash() {
+        web_options.follow_system_theme = false;
+        web_options.default_theme = eframe::Theme::Dark;
+    }
 
     // Check for a `url` query parameter to load custom extracted data JSON
     let json_url = get_url_query_param("url")
         .unwrap_or_else(|| format!("{}/static/Nat.zero_add.json", SERVER_ADDR));
+    let default_json_url = format!("{}/static/Nat.zero_add.json", SERVER_ADDR);
 
     wasm_bindgen_futures::spawn_local(async move {
-        // let data_raw = read_graph_file_dialog().await;
-        let data_raw = read_graph_url(&json_url)
-            .await
-            .unwrap();
+        // Try custom/default URL first, then fall back to embedded JSON to keep app bootable.
+        let data_raw = match read_graph_url(&json_url).await {
+            Ok(data) => data,
+            Err(err) => {
+                log::warn!("Failed to load JSON from '{}': {}. Falling back.", json_url, err);
+                match read_graph_url(&default_json_url).await {
+                    Ok(default_data) => default_data,
+                    Err(default_err) => {
+                        log::warn!(
+                            "Failed to load default JSON from '{}': {}. Using embedded DATA.",
+                            default_json_url,
+                            default_err
+                        );
+                        __file_nat_zero::DATA.to_owned()
+                    }
+                }
+            }
+        };
+
         eframe::WebRunner::new()
             .start(
                 "lean-graph-canvas", // hardcode it
@@ -49,4 +69,15 @@ fn get_url_query_param(param: &str) -> Option<String> {
     let search = window.location().search().ok()?;
     let params = web_sys::UrlSearchParams::new_with_str(&search).ok()?;
     params.get(param)
+}
+
+#[cfg(target_arch = "wasm32")]
+fn has_dark_hash() -> bool {
+    let Some(window) = web_sys::window() else {
+        return false;
+    };
+    let Ok(hash) = window.location().hash() else {
+        return false;
+    };
+    hash.eq_ignore_ascii_case("#dark")
 }
